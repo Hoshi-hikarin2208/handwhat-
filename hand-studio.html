@@ -1,0 +1,1280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; base-uri 'none'; object-src 'none'; form-action 'none'; frame-src 'none'; img-src data: blob:; media-src 'self' blob:; font-src 'self' data:; connect-src https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1675469240/ https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4.1633559619/; script-src 'sha256-vZylyQ0NQSyyPe8YBBjoPcrzUssn+GRXaGbIGWK9fbk=' 'sha384-oHwoZ9HyKv5ark5VOH+XWdbNfmhYtptAOBuV8plz6mAfXvTA6d8fULuYllWouEK2' 'sha384-nKiz5QrpRlMQLw5nrZcprT7N9vmmAcIgV8TuGuep4x91V4JIPsXa+D44Wxj0guoa' https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1675469240/hands_solution_packed_assets_loader.js https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1675469240/hands_solution_simd_wasm_bin.js https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1675469240/hands_solution_wasm_bin.js https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4.1633559619/face_mesh_solution_packed_assets_loader.js https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4.1633559619/face_mesh_solution_simd_wasm_bin.js https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4.1633559619/face_mesh_solution_wasm_bin.js 'wasm-unsafe-eval' 'unsafe-eval'; script-src-elem 'sha256-vZylyQ0NQSyyPe8YBBjoPcrzUssn+GRXaGbIGWK9fbk=' 'sha384-oHwoZ9HyKv5ark5VOH+XWdbNfmhYtptAOBuV8plz6mAfXvTA6d8fULuYllWouEK2' 'sha384-nKiz5QrpRlMQLw5nrZcprT7N9vmmAcIgV8TuGuep4x91V4JIPsXa+D44Wxj0guoa' https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1675469240/hands_solution_packed_assets_loader.js https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1675469240/hands_solution_simd_wasm_bin.js https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1675469240/hands_solution_wasm_bin.js https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4.1633559619/face_mesh_solution_packed_assets_loader.js https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4.1633559619/face_mesh_solution_simd_wasm_bin.js https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4.1633559619/face_mesh_solution_wasm_bin.js; script-src-attr 'none'; style-src 'sha256-MvSk4sLeMUl3EYHGdpHeMO7qIF2U8syIMalK1DxpnEU='; worker-src blob:; child-src blob:">
+<title>Hand Studio</title>
+<style>
+  :root{color-scheme:light;--bg:#f4f6fb;--card:#fff;--text:#16181d;--muted:#667085;--accent:#4f46e5;--line:#e4e7ec;--stage:#0a0d14}
+  @media (prefers-color-scheme:dark){:root{color-scheme:dark;--bg:#0c1018;--card:#151b26;--text:#eef0f4;--muted:#98a2b3;--accent:#818cf8;--line:#2a3445;--stage:#05070b}}
+  :root[data-theme="light"]{color-scheme:light;--bg:#f4f6fb;--card:#fff;--text:#16181d;--muted:#667085;--accent:#4f46e5;--line:#e4e7ec;--stage:#0a0d14}
+  :root[data-theme="dark"]{color-scheme:dark;--bg:#0c1018;--card:#151b26;--text:#eef0f4;--muted:#98a2b3;--accent:#818cf8;--line:#2a3445;--stage:#05070b}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:radial-gradient(ellipse at 12% 0%,rgba(99,102,241,.12),transparent 36%),var(--bg);color:var(--text);padding:clamp(12px,2.4vw,28px)}
+  .wrap{max-width:1380px;margin:0 auto;display:grid;gap:18px;grid-template-columns:minmax(0,1.35fr) minmax(350px,.9fr);align-items:start}
+  @media(max-width:900px){.wrap{grid-template-columns:1fr}}
+  .app-header{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+  .app-header h1{font-size:clamp(24px,3vw,34px);letter-spacing:-.04em;margin:0}
+  .eyebrow{margin:0 0 3px;color:var(--accent);font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase}
+  .toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .space-top{margin-top:10px}
+  .face-toggle{display:flex;gap:8px;align-items:center;margin:0 0 8px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:clamp(12px,1.6vw,20px);box-shadow:0 12px 35px rgba(20,30,55,.08)}
+  .stage{position:relative;background:var(--stage);border-radius:14px;overflow:hidden;box-shadow:0 4px 18px rgba(0,0,0,.2)}
+  canvas#view{width:100%;height:auto;display:block}
+  #gesture{position:absolute;top:12px;left:50%;transform:translateX(-50%);max-width:calc(100% - 20px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;background:rgba(8,12,22,.82);color:#fff;padding:7px 13px;border:1px solid rgba(255,255,255,.16);border-radius:20px;font-size:13px;font-weight:650;pointer-events:none}
+  #status{position:absolute;left:12px;bottom:12px;max-width:calc(100% - 24px);background:rgba(8,12,22,.84);color:#fff;padding:7px 11px;border:1px solid rgba(255,255,255,.15);border-radius:10px;font-size:12px}
+  .tabs{display:flex;gap:5px;margin-bottom:14px;padding:4px;background:var(--bg);border:1px solid var(--line);border-radius:12px}
+  .tab{flex:1;background:transparent;color:var(--muted);border:0;border-radius:9px;padding:9px 6px;cursor:pointer;font-size:13px;font-weight:650;transition:background .15s,color .15s}
+  .tab.on{background:var(--accent);color:#fff;box-shadow:0 3px 8px rgba(79,70,229,.25)}
+  button.b{background:var(--accent);color:#fff;border:0;border-radius:10px;padding:9px 14px;font-size:13px;font-weight:650;cursor:pointer;margin:0 6px 6px 0;transition:filter .15s,transform .15s}
+  button.b:hover,.chip:hover,.tab:hover{filter:brightness(1.08)}
+  button.b:active{transform:translateY(1px)}
+  button.alt{background:transparent;color:var(--text);border:1px solid var(--line)}
+  button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid rgba(99,102,241,.42);outline-offset:2px}
+  button:disabled{opacity:.48;cursor:not-allowed}
+  .chip{border:1px solid var(--line);background:transparent;color:var(--text);border-radius:20px;padding:6px 12px;cursor:pointer;margin:0 4px 5px 0;font-size:12px;transition:background .15s,border-color .15s}
+  .chip.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+  #filters{display:flex;flex-wrap:wrap;gap:2px;max-height:190px;overflow:auto;padding:2px 3px 6px}
+  #filters .chip[hidden]{display:none}
+  input[type=search],select{width:100%;background:var(--card);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:9px 11px;font:inherit;font-size:13px}
+  #signals{border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--bg)}
+  .sw{width:26px;height:26px;border-radius:50%;border:2px solid var(--line);cursor:pointer;display:inline-block;margin:0 5px 6px 0;padding:0}
+  .sw.on{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
+  .big{font-size:76px;font-weight:700;text-align:center;height:90px;line-height:90px;color:var(--accent)}
+  .bar{height:8px;background:var(--line);border-radius:6px;overflow:hidden}
+  .bar>div{height:100%;width:0;background:var(--accent)}
+  #out{min-height:70px;font-size:24px;word-break:break-word;border:1px dashed var(--line);border-radius:10px;padding:10px;margin:12px 0;white-space:pre-wrap}
+  .muted{color:var(--muted);font-size:12px;line-height:1.55;margin:8px 0}
+  label{font-size:12px;font-weight:650;display:block;margin:10px 0 4px}
+  input[type=range]{width:100%}
+  .panel{display:none}.panel.on{display:block}
+  hr{border:0;border-top:1px solid var(--line);margin:16px 0}
+  @media(max-width:560px){body{padding:10px}.app-header{align-items:flex-start}.toolbar{width:100%}.toolbar .b{flex:1}.tabs{gap:2px}.tab{font-size:11px;padding:9px 3px}.card{border-radius:14px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="app-header">
+    <div><p class="eyebrow">Gesture-powered creative studio</p><h1>Hand Studio</h1></div>
+    <div class="toolbar" aria-label="Camera and display controls">
+      <button class="b alt" id="mirrorToggle" type="button" aria-pressed="true" title="Keyboard shortcut: M">Mirror: On</button>
+      <button class="b alt" id="themeToggle" type="button" title="Keyboard shortcut: T">Theme: Auto</button>
+      <button class="b" id="cameraToggle" type="button" title="Keyboard shortcut: P">Start camera</button>
+    </div>
+  </header>
+
+  <div class="card">
+    <div class="stage">
+      <canvas id="view" width="640" height="480"></canvas>
+      <video id="video" playsinline muted hidden></video>
+      <div id="gesture" aria-live="polite">Gesture: waiting for hand</div>
+      <div id="status" aria-live="polite">Press Start camera to enable hand tracking.</div>
+    </div>
+    <p class="muted" id="debug"></p>
+  </div>
+
+  <div class="card">
+    <div class="tabs">
+      <button class="tab on" data-mode="type">Sign Typer</button>
+      <button class="tab" data-mode="draw">Air Draw</button>
+      <button class="tab" data-mode="portal">Portal</button>
+      <button class="tab" data-mode="puzzle">Puzzle Cam</button>
+    </div>
+
+    <div class="panel on" data-p="type">
+      <div class="big" id="letter">–</div>
+      <div class="bar"><div id="prog"></div></div>
+      <div id="out"></div>
+      <button class="b" id="speak">Speak</button>
+      <button class="b alt" id="copy">Copy</button>
+      <button class="b alt" id="clearText">Clear</button>
+      <button class="chip" id="ilySequence" type="button">Start I love you sequence</button>
+      <p class="muted">Hold a sign for 1 second to type it; hold the ILY sign to type “I love you”.<br>
+      Sequence: one index finger → thumb/index finger heart → point with index. Hold each pose briefly.<br>
+      <b>A B C D F I L O S U V W Y</b><br>
+      Open hand = space, thumbs up = backspace.</p>
+      <p class="muted" id="ilyGuide">Start the sequence to follow the three poses on the gesture label.</p>
+    </div>
+
+    <div class="panel" data-p="draw">
+      <p class="muted"><b>Freehand:</b> index finger draws; hold a fist briefly to stop. <b>Box:</b> point and move to size a rectangle, then pause to place it. Hold index and middle fingers briefly to erase in these tools. <b>Two-point:</b> select it, then point with the index finger on each hand to draw two lines; an open palm erases. Point at the color strip at the bottom of the video to pick a color.</p>
+      <button class="chip on" id="freehandTool" type="button">Freehand</button>
+      <button class="chip" id="boxTool" type="button">Box</button>
+      <button class="chip" id="twoFingerTool" type="button">Two-point</button>
+      <div id="swatches"></div>
+      <label>Brush size <span id="brushV">8</span>px</label>
+      <input type="range" id="brush" min="2" max="30" value="8">
+      <label>Eraser size <span id="eraseV">38</span>px</label>
+      <input type="range" id="erase" min="15" max="90" value="38">
+      <button class="b alt space-top" id="clearDraw">Clear drawing</button>
+    </div>
+
+    <div class="panel" data-p="portal">
+      <p class="muted">Show <b>both hands</b> to outline the live filter with 4, 6, or 8 fingertips. Use <b>Save snapshot</b> below to take a picture; each saved Portal snapshot advances to the next filter. Click a filter or press keys 1 to 9 to choose one.</p>
+      <div id="portalCorners">
+        <button class="chip on" data-corners="4" type="button">4 fingers</button>
+        <button class="chip" data-corners="6" type="button">6 fingers</button>
+        <button class="chip" data-corners="8" type="button">8 fingers</button>
+      </div>
+      <label for="filterSearch">Find a filter</label>
+      <input id="filterSearch" type="search" placeholder="Search 33 filters" autocomplete="off">
+      <div id="filters"></div>
+      <p class="muted" id="portalFilterStatus" aria-live="polite">Quickly pinch and release thumb and index on either hand to change filters. Saving a Portal snapshot also advances the filter. Press 1–9 to select a filter.</p>
+      <p class="muted">Chrome or Edge is best for the color filters.</p>
+    </div>
+
+    <div class="panel" data-p="puzzle">
+      <p class="muted">Use your thumb and index fingertips on both hands to size the frame. Hold it steady briefly to lock it; it stays in place while you move inside it. Then a 3-2-1 countdown starts and a cropped photo fills the next cell every 3 seconds until the 3 x 3 grid is full. Freestyle follows your four-finger quadrilateral. Changing shape resets the grid.</p>
+      <label for="puzzleShapePicker">Frame shape</label>
+      <select id="puzzleShapePicker"></select>
+      <button class="b alt" id="resetPuzzle" type="button">Reset grid</button>
+      <button class="b" id="savePuzzle" type="button" disabled>Save 3 x 3 collage</button>
+    </div>
+
+    <hr>
+    <label class="face-toggle"><input type="checkbox" id="faceOn" checked> Face detection (mesh, box, expressions)</label>
+    <p class="muted" id="trackingNotice" hidden></p>
+    <div id="signals" class="muted" aria-live="polite">
+      <b>Emotion / expression estimate:</b> <span id="expressionCue">waiting for face</span><br>
+      <b>Body-language cues:</b> <span id="bodyCue">waiting for hands</span>
+    </div>
+    <p class="muted">These are rough visual cues, not reliable emotion readings. This app tracks face and hands only, not full-body posture.</p>
+    <button class="b alt" id="save">Save snapshot</button>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1675469240/hands.js" integrity="sha384-oHwoZ9HyKv5ark5VOH+XWdbNfmhYtptAOBuV8plz6mAfXvTA6d8fULuYllWouEK2" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4.1633559619/face_mesh.js" integrity="sha384-nKiz5QrpRlMQLw5nrZcprT7N9vmmAcIgV8TuGuep4x91V4JIPsXa+D44Wxj0guoa" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script>
+const $ = id => document.getElementById(id);
+const video = $('video'), view = $('view'), ctx = view.getContext('2d');
+const snap = document.createElement('canvas'), sctx = snap.getContext('2d');
+const tmp = document.createElement('canvas'), tctx = tmp.getContext('2d', { willReadFrequently: true });
+const paint = document.createElement('canvas'), pctx = paint.getContext('2d');
+const faceLayer = document.createElement('canvas'), faceCtx = faceLayer.getContext('2d');
+
+let W = 640, H = 480, sized = false;
+let mode = 'type', faceOn = true, handRes = [], faceRes = null;
+let mirror = true, themeMode = 'auto';
+let cameraRunning = false, cameraStarting = false, cameraError = '', processingFrame = false;
+let mediaStream = null, frameRequest = 0, lastVideoTime = -1, consecutiveFrameErrors = 0;
+let lastFaceAt = 0, lastSignalsAt = 0, faceBusy = false;
+const FACE_INFERENCE_INTERVAL_MS = 120, SIGNAL_UPDATE_INTERVAL_MS = 180;
+let text = '', cand = null, since = 0, locked = false;
+let ilySequenceActive = false, ilyStep = 0, ilyCandidate = null, ilySince = 0;
+const HOLD = 1000;
+const ILY_STEP_HOLD = 600;
+const ILY_STEPS = ['I: hold up one index finger', 'LOVE: touch thumb and index finger', 'YOU: point with index finger'];
+const COLORS = ['#ffffff', '#ff3b30', '#ff9500', '#ffe600', '#34c759', '#00d4ff', '#3b6bff', '#e040fb'];
+const COLOR_NAMES = ['white', 'red', 'orange', 'yellow', 'green', 'cyan', 'blue', 'magenta'];
+let ink = COLORS[0], brush = 8, eraser = 38, last = null, state = 'idle';
+const DRAW_GRACE_MS = 350, ERASE_HOLD_MS = 180, STOP_HOLD_MS = 180;
+let lastPointingAt = 0, eraseSince = 0, fistSince = 0;
+let lastMiddle = null;
+let drawTool = 'freehand', boxStart = null, boxPreview = null;
+const FILTER_LIST = [
+  'thermal', 'gray', 'pixel', 'purple', 'invert', 'sepia', 'warm', 'cool', 'vivid',
+  'vintage', 'noir', 'rose', 'gold', 'ice', 'teal', 'emerald', 'crimson', 'ocean',
+  'cyberpunk', 'dream', 'faded', 'pastel', 'contrast', 'sunshine', 'night', 'mint',
+  'cherry', 'copper', 'lemon', 'slate', 'infrared', 'frosty', 'retro'
+];
+const FILTERS = {
+  gray: 'grayscale(1) contrast(1.15)',
+  purple: 'grayscale(1) sepia(1) hue-rotate(230deg) saturate(4)',
+  invert: 'invert(1)',
+  sepia: 'sepia(1) saturate(1.35) contrast(1.05)',
+  warm: 'sepia(.3) saturate(1.4) hue-rotate(-10deg) brightness(1.05)',
+  cool: 'saturate(1.15) hue-rotate(180deg) brightness(1.04)',
+  vivid: 'saturate(1.8) contrast(1.12)',
+  vintage: 'sepia(.38) saturate(.85) contrast(.9) brightness(1.05)',
+  noir: 'grayscale(1) contrast(1.7) brightness(.88)',
+  rose: 'sepia(.25) hue-rotate(300deg) saturate(1.8)',
+  gold: 'sepia(.45) hue-rotate(-12deg) saturate(1.7) brightness(1.05)',
+  ice: 'hue-rotate(175deg) saturate(.85) brightness(1.12)',
+  teal: 'sepia(.15) hue-rotate(145deg) saturate(1.7)',
+  emerald: 'hue-rotate(85deg) saturate(1.6) brightness(1.04)',
+  crimson: 'sepia(.2) hue-rotate(320deg) saturate(2) contrast(1.05)',
+  ocean: 'hue-rotate(165deg) saturate(1.5) contrast(1.08)',
+  cyberpunk: 'contrast(1.25) saturate(2) hue-rotate(265deg)',
+  dream: 'blur(.35px) brightness(1.12) saturate(1.35) sepia(.1)',
+  faded: 'contrast(.82) saturate(.65) brightness(1.12)',
+  pastel: 'saturate(.72) brightness(1.18) contrast(.92)',
+  contrast: 'contrast(1.8) saturate(1.15)',
+  sunshine: 'sepia(.18) saturate(1.6) brightness(1.13)',
+  night: 'brightness(.68) contrast(1.25) saturate(1.2)',
+  mint: 'hue-rotate(95deg) saturate(1.2) brightness(1.08)',
+  cherry: 'hue-rotate(330deg) saturate(1.65) contrast(1.1)',
+  copper: 'sepia(.52) hue-rotate(-20deg) saturate(1.45)',
+  lemon: 'sepia(.18) hue-rotate(12deg) saturate(2) brightness(1.08)',
+  slate: 'grayscale(.72) hue-rotate(185deg) contrast(1.15)',
+  infrared: 'grayscale(.45) sepia(.8) hue-rotate(300deg) saturate(3) contrast(1.2)',
+  frosty: 'hue-rotate(175deg) saturate(.9) brightness(1.17) contrast(1.05)',
+  retro: 'sepia(.2) saturate(1.35) contrast(.9) brightness(1.04)'
+};
+let filt = 'thermal';
+let portalPoints = 4;
+const PORTAL_PINCH_THRESHOLD = 0.32, PORTAL_PINCH_MIN_MS = 50;
+const PORTAL_PINCH_MAX_MS = 900, PORTAL_PINCH_COOLDOWN_MS = 650;
+let portalPinchActive = [false, false], portalPinchSince = [0, 0], portalLastPinchAt = -Infinity;
+const PUZZLE_GRID_SIZE = 3, PUZZLE_PHOTO_INTERVAL_MS = 3000;
+const PUZZLE_BOX_STABLE_MS = 700, PUZZLE_BOX_JITTER_PX = 12;
+const PUZZLE_SHAPES = [
+  'square', 'rectangle', 'portrait', 'circle', 'oval', 'diamond', 'triangle', 'triangle-down',
+  'pentagon', 'hexagon', 'octagon', 'star', 'heart', 'rounded-square', 'parallelogram',
+  'trapezoid', 'arrow', 'cross', 'burst', 'shield', 'tag', 'freestyle'
+];
+let puzzleShape = 'square';
+let puzzlePhotos = [], puzzleBoxSince = 0, puzzleBoxPrevious = null;
+let puzzleNextCaptureAt = 0, puzzleLastFrame = null, puzzleLockedFrame = null;
+let frames = [], fps = 0;
+
+const P = l => ({ x: (mirror ? 1 - l.x : l.x) * W, y: l.y * H });
+const d = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+
+function setSize() {
+  W = view.width = snap.width = paint.width = faceLayer.width = video.videoWidth;
+  H = view.height = snap.height = paint.height = faceLayer.height = video.videoHeight;
+  sized = true;
+}
+
+/* ---------- hand logic ---------- */
+function fingers(lm) {
+  const hs = d(lm[0], lm[9]);
+  const ext = (t, p) => d(lm[t], lm[0]) > d(lm[p], lm[0]) * 1.1;
+  return {
+    hs, i: ext(8, 6), m: ext(12, 10), r: ext(16, 14), p: ext(20, 18),
+    th: d(lm[4], lm[5]) / hs > 0.75
+  };
+}
+
+function describeGesture(lm) {
+  const f = fingers(lm);
+  if (d(lm[4], lm[8]) / f.hs < 0.35) return 'Pinch';
+  if (f.th && f.i && !f.m && !f.r && f.p) return 'I love you';
+  if (f.th && !f.i && !f.m && !f.r && !f.p &&
+      lm[4].y < lm[5].y - 0.6 * f.hs) return 'Thumbs up';
+  if (f.i && f.m && !f.r && !f.p) return 'Peace sign';
+  if (f.i && !f.m && !f.r && !f.p) return 'Pointing';
+  if (f.i && f.m && f.r && f.p) return 'Open hand';
+  if (!f.i && !f.m && !f.r && !f.p) return 'Fist';
+  return 'Hand pose';
+}
+
+function classify(lm) {
+  const { hs, i, m, r, p, th } = fingers(lm);
+  const pinch = d(lm[4], lm[8]) / hs, thMid = d(lm[4], lm[12]) / hs;
+  const up = lm[4].y < lm[5].y - 0.6 * hs;
+  $('debug').textContent =
+    `Fingers: thumb ${th ? '▲' : '▽'} index ${i ? '▲' : '▽'} middle ${m ? '▲' : '▽'} ring ${r ? '▲' : '▽'} pinky ${p ? '▲' : '▽'}`;
+  if (th && i && !m && !r && p) return 'ILY';
+  if (th && i && m && r && p) return ' ';
+  if (th && !i && !m && !r && !p && up) return '⌫';
+  if (pinch < 0.35 && m && r && p) return 'F';
+  if (i && m && r && p && !th) return 'B';
+  if (i && m && r && !p) return 'W';
+  if (i && m && !r && !p) return d(lm[8], lm[12]) / hs > 0.55 ? 'V' : 'U';
+  if (i && !m && !r && !p) { if (th) return 'L'; if (thMid < 0.5) return 'D'; return null; }
+  if (!i && !m && !r && p) return th ? 'Y' : 'I';
+  if (!i && !m && !r && !p) {
+    if (pinch < 0.4 && thMid < 0.6) return 'O';
+    if (th && pinch > 0.5 && pinch < 1.2 && d(lm[8], lm[5]) / hs > 0.6) return 'C';
+    return th ? 'A' : 'S';
+  }
+  return null;
+}
+
+function typeMode() {
+  const h = handRes[0];
+  const now = performance.now();
+  if (ilySequenceActive) {
+    const matches = h && (ilyStep === 1
+      ? d(h[4], h[8]) / fingers(h).hs < 0.35
+      : (() => { const f = fingers(h); return f.i && !f.m && !f.r && !f.p; })());
+    $('letter').textContent = `${ilyStep + 1}/3`;
+    $('debug').textContent = h ? ILY_STEPS[ilyStep] : 'Show your hand for ' + ILY_STEPS[ilyStep];
+    if (matches) {
+      if (ilyCandidate !== ilyStep) { ilyCandidate = ilyStep; ilySince = now; }
+      $('prog').style.width = Math.min(100, (now - ilySince) / ILY_STEP_HOLD * 100) + '%';
+      if (now - ilySince >= ILY_STEP_HOLD) {
+        ilyStep++; ilyCandidate = null; ilySince = now;
+        if (ilyStep === ILY_STEPS.length) {
+          text += (text && !text.endsWith(' ') ? ' ' : '') + 'I love you';
+          $('out').textContent = text;
+          ilySequenceActive = false;
+          $('ilySequence').classList.remove('on');
+          $('ilySequence').textContent = 'Start I love you sequence';
+          $('ilyGuide').textContent = '“I love you” added to the typed text.';
+          $('letter').textContent = 'ILY'; $('prog').style.width = '100%';
+          cand = h ? classify(h) : null; since = now; locked = !!cand;
+        } else {
+          $('letter').textContent = `${ilyStep + 1}/3`;
+          $('prog').style.width = '0%';
+          $('ilyGuide').textContent = 'Next: ' + ILY_STEPS[ilyStep];
+        }
+      }
+    } else {
+      ilyCandidate = null; $('prog').style.width = '0%';
+      $('ilyGuide').textContent = `Step ${ilyStep + 1}: ${ILY_STEPS[ilyStep]}`;
+    }
+    return;
+  }
+  const ch = h ? classify(h) : null;
+  if (!h) $('debug').textContent = 'Show your hand to the camera';
+  if (ch !== cand) { cand = ch; since = now; locked = false; }
+  $('letter').textContent = ch === ' ' ? '␣' : (ch || '–');
+  $('prog').style.width = (ch && !locked ? Math.min(100, (now - since) / HOLD * 100) : 0) + '%';
+  if (ch && !locked && now - since >= HOLD) {
+    if (ch === '⌫') text = text.slice(0, -1);
+    else if (ch === 'ILY') text += (text && !text.endsWith(' ') ? ' ' : '') + 'I love you';
+    else text += ch;
+    $('out').textContent = text;
+    locked = true;
+  }
+}
+
+function finishBox() {
+  if (boxStart && boxPreview && (boxPreview.w > 1 || boxPreview.h > 1)) {
+    pctx.strokeStyle = ink; pctx.lineWidth = brush; pctx.lineJoin = 'round';
+    pctx.strokeRect(boxPreview.x, boxPreview.y, boxPreview.w, boxPreview.h);
+  }
+  boxStart = null; boxPreview = null;
+}
+
+function eraseAt(c) {
+  pctx.save(); pctx.globalCompositeOperation = 'destination-out';
+  pctx.beginPath(); pctx.arc(c.x, c.y, eraser, 0, 7); pctx.fill(); pctx.restore();
+  ctx.strokeStyle = '#ff3b30'; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.arc(c.x, c.y, eraser, 0, 7); ctx.stroke();
+}
+
+function strokeTo(tip, previous) {
+  const p = previous ? { x: previous.x + (tip.x - previous.x) * 0.5, y: previous.y + (tip.y - previous.y) * 0.5 } : tip;
+  pctx.beginPath(); pctx.moveTo((previous || p).x, (previous || p).y); pctx.lineTo(p.x, p.y); pctx.stroke();
+  return p;
+}
+
+function drawTwoPointMode(now) {
+  const hs = handRes.slice(0, 2).sort((a, b) => P(a[0]).x - P(b[0]).x);
+  const fs = hs.map(fingers);
+  const openPalm = fs.find(f => f.i && f.m && f.r && f.p);
+  if (openPalm) {
+    const h = hs[fs.indexOf(openPalm)];
+    eraseAt(P(h[9]));
+    last = null; lastMiddle = null; lastPointingAt = 0; fistSince = 0;
+    state = 'erasing'; return;
+  }
+  const fist = fs.some(f => !f.i && !f.m && !f.r && !f.p);
+  if (fist) {
+    if (!fistSince) fistSince = now;
+    if (now - fistSince >= STOP_HOLD_MS) {
+      last = null; lastMiddle = null; lastPointingAt = 0; fistSince = 0;
+      state = 'fist stop'; return;
+    }
+    state = 'stopping'; return;
+  }
+  fistSince = 0;
+
+  const paletteHand = hs.find((h, i) => fs[i].i && P(h[8]).y > H - 44);
+  if (paletteHand) {
+    const p = P(paletteHand[8]);
+    const k = Math.min(COLORS.length - 1, Math.max(0, Math.floor(p.x / (W / COLORS.length))));
+    setInk(COLORS[k]); last = null; lastMiddle = null; lastPointingAt = 0;
+    state = 'picking'; return;
+  }
+
+  if (hs.length < 2) {
+    if (now - lastPointingAt > DRAW_GRACE_MS) { last = null; lastMiddle = null; }
+    state = hs.length ? 'show second hand' : 'no hands'; return;
+  }
+
+  const pointing = fs.every(f => f.i && !f.m && !f.r && !f.p);
+  if (pointing || (last && now - lastPointingAt <= DRAW_GRACE_MS)) {
+    if (pointing) lastPointingAt = now;
+    pctx.strokeStyle = ink; pctx.lineWidth = brush; pctx.lineCap = pctx.lineJoin = 'round';
+    last = strokeTo(P(hs[0][8]), last);
+    lastMiddle = strokeTo(P(hs[1][8]), lastMiddle);
+    ctx.fillStyle = ink;
+    [last, lastMiddle].forEach(p => { ctx.beginPath(); ctx.arc(p.x, p.y, brush / 2 + 2, 0, 7); ctx.fill(); });
+    state = 'two-point drawing'; return;
+  }
+  last = null; lastMiddle = null; lastPointingAt = 0; state = 'paused';
+}
+
+function drawMode() {
+  const now = performance.now();
+  if (drawTool === 'two-finger') { drawTwoPointMode(now); return; }
+  const h = handRes[0];
+  if (!h) {
+    finishBox();
+    if (now - lastPointingAt > DRAW_GRACE_MS) { last = null; lastMiddle = null; }
+    eraseSince = 0; fistSince = 0;
+    state = 'no hand'; return;
+  }
+  const f = fingers(h), tip = P(h[8]);
+  if (tip.y > H - 44 && f.i && !f.m) {                      // palette strip
+    finishBox();
+    const k = Math.min(COLORS.length - 1, Math.max(0, Math.floor(tip.x / (W / COLORS.length))));
+    setInk(COLORS[k]); last = null; lastMiddle = null; lastPointingAt = 0; eraseSince = 0; fistSince = 0; state = 'picking'; return;
+  }
+  const twoFingerPose = f.i && f.m && !f.r && !f.p;
+  if (twoFingerPose) {
+    fistSince = 0;
+    if (!eraseSince) eraseSince = now;
+    if (now - eraseSince >= ERASE_HOLD_MS) {
+      finishBox();
+      const a = P(h[8]), b = P(h[12]);
+      const c = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+      eraseAt(c);
+      last = null; lastMiddle = null; lastPointingAt = 0; fistSince = 0; state = 'erasing'; return;
+    }
+    state = 'erase ready'; return;
+  }
+  eraseSince = 0;
+  if (!f.i && !f.m && !f.r && !f.p) {                       // fist stops the stroke
+    if (!fistSince) fistSince = now;
+    if (now - fistSince >= STOP_HOLD_MS) {
+      finishBox();
+      last = null; lastMiddle = null; lastPointingAt = 0; fistSince = 0; state = 'fist stop'; return;
+    }
+    state = 'stopping'; return;
+  }
+  fistSince = 0;
+  if (f.i && f.m && f.r && f.p) {                           // open palm pauses
+    finishBox();
+    state = 'paused';
+    last = null; lastMiddle = null; lastPointingAt = 0; fistSince = 0; return;
+  }
+  const drawingPose = f.i;
+  if (drawingPose || (drawTool === 'freehand' && last && now - lastPointingAt <= DRAW_GRACE_MS)) {
+    if (drawingPose) lastPointingAt = now;
+    if (drawTool === 'box') {
+      if (!boxStart) boxStart = tip;
+      boxPreview = {
+        x: Math.min(boxStart.x, tip.x), y: Math.min(boxStart.y, tip.y),
+        w: Math.abs(tip.x - boxStart.x), h: Math.abs(tip.y - boxStart.y)
+      };
+      last = null; lastMiddle = null; state = 'sizing box'; return;
+    }
+    pctx.strokeStyle = ink; pctx.lineWidth = brush; pctx.lineCap = pctx.lineJoin = 'round';
+    last = strokeTo(tip, last); lastMiddle = null; state = 'drawing';
+    ctx.fillStyle = ink; ctx.beginPath(); ctx.arc(last.x, last.y, brush / 2 + 2, 0, 7); ctx.fill();
+    return;
+  }
+  finishBox();
+  last = null; lastMiddle = null; lastPointingAt = 0; state = 'paused';
+}
+
+/* ---------- portal ---------- */
+function ramp(t) {
+  const S = [[20, 0, 120], [0, 120, 255], [0, 230, 140], [255, 235, 0], [255, 60, 0], [255, 255, 255]];
+  const p = t * (S.length - 1), i = Math.min(S.length - 2, Math.floor(p)), f = p - i;
+  return S[i].map((v, k) => v + (S[i + 1][k] - v) * f);
+}
+
+function applyFilter(x, y, w, h) {
+  if (filt === 'thermal') {
+    const s = Math.max(1, Math.round(Math.max(w, h) / 220));
+    tmp.width = Math.ceil(w / s); tmp.height = Math.ceil(h / s);
+    tctx.drawImage(snap, x, y, w, h, 0, 0, tmp.width, tmp.height);
+    const im = tctx.getImageData(0, 0, tmp.width, tmp.height), a = im.data;
+    for (let i = 0; i < a.length; i += 4) {
+      const c = ramp((a[i] * 0.3 + a[i + 1] * 0.59 + a[i + 2] * 0.11) / 255);
+      a[i] = c[0]; a[i + 1] = c[1]; a[i + 2] = c[2];
+    }
+    tctx.putImageData(im, 0, 0);
+    ctx.drawImage(tmp, 0, 0, tmp.width, tmp.height, x, y, w, h);
+  } else if (filt === 'pixel') {
+    tmp.width = Math.max(1, Math.round(w / 16)); tmp.height = Math.max(1, Math.round(h / 16));
+    tctx.drawImage(snap, x, y, w, h, 0, 0, tmp.width, tmp.height);
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(tmp, 0, 0, tmp.width, tmp.height, x, y, w, h);
+    ctx.imageSmoothingEnabled = true;
+  } else {
+    ctx.filter = FILTERS[filt]; ctx.drawImage(snap, 0, 0); ctx.filter = 'none';
+  }
+}
+
+function cyclePortalFilter() {
+  const index = FILTER_LIST.indexOf(filt);
+  setFilter(FILTER_LIST[(index + 1) % FILTER_LIST.length]);
+}
+
+function updatePortalFilterGesture(hands, now) {
+  for (let i = 0; i < 2; i++) {
+    const lm = hands[i];
+    if (!lm) {
+      portalPinchActive[i] = false;
+      portalPinchSince[i] = 0;
+      continue;
+    }
+    const handSize = d(lm[0], lm[9]);
+    const pinching = handSize > 0 && d(lm[4], lm[8]) / handSize < PORTAL_PINCH_THRESHOLD;
+    if (pinching && !portalPinchActive[i]) {
+      portalPinchActive[i] = true;
+      portalPinchSince[i] = now;
+    } else if (!pinching && portalPinchActive[i]) {
+      const held = now - portalPinchSince[i];
+      portalPinchActive[i] = false;
+      portalPinchSince[i] = 0;
+      if (held >= PORTAL_PINCH_MIN_MS && held <= PORTAL_PINCH_MAX_MS &&
+          now - portalLastPinchAt >= PORTAL_PINCH_COOLDOWN_MS) {
+        cyclePortalFilter();
+        portalLastPinchAt = now;
+      }
+    }
+  }
+}
+
+function fourFingerCorners() {
+  if (handRes.length < 2) return null;
+  const hs = handRes.slice(0, 2).sort((a, b) => P(a[0]).x - P(b[0]).x);
+  const corner = h => { const a = P(h[4]), b = P(h[8]); return a.y < b.y ? [a, b] : [b, a]; };
+  const [lt, lb] = corner(hs[0]), [rt, rb] = corner(hs[1]);
+  return [lt, rt, rb, lb];
+}
+
+function polygonBounds(q) {
+  const xs = q.map(p => p.x), ys = q.map(p => p.y);
+  const x = Math.max(0, Math.floor(Math.min(...xs))), y = Math.max(0, Math.floor(Math.min(...ys)));
+  const w = Math.min(W, Math.ceil(Math.max(...xs))) - x;
+  const h = Math.min(H, Math.ceil(Math.max(...ys))) - y;
+  return w < 8 || h < 8 ? null : { x, y, w, h };
+}
+
+function squareFrameFromCorners(q) {
+  const bounds = polygonBounds(q);
+  if (!bounds) return null;
+  const side = Math.min(bounds.w, bounds.h);
+  const x = bounds.x + (bounds.w - side) / 2, y = bounds.y + (bounds.h - side) / 2;
+  return {
+    x, y, w: side, h: side,
+    q: [{ x, y }, { x: x + side, y }, { x: x + side, y: y + side }, { x, y: y + side }]
+  };
+}
+
+function rectangleCorners(bounds) {
+  const { x, y, w, h } = bounds;
+  return [{ x, y }, { x: x + w, y }, { x: x + w, y: y + h }, { x, y: y + h }];
+}
+
+function puzzleFrameFromCorners(corners) {
+  const bounds = polygonBounds(corners);
+  if (!bounds) return null;
+  if (puzzleShape === 'freestyle') {
+    return { ...bounds, q: corners.map(p => ({ x: p.x, y: p.y })), shape: puzzleShape };
+  }
+  if (puzzleShape === 'rectangle') {
+    return { ...bounds, q: rectangleCorners(bounds), shape: puzzleShape };
+  }
+  if (puzzleShape === 'portrait') {
+    const side = Math.min(bounds.w, bounds.h), w = side * 0.72, h = side;
+    const x = bounds.x + (bounds.w - w) / 2, y = bounds.y + (bounds.h - h) / 2;
+    return { x, y, w, h, q: rectangleCorners({ x, y, w, h }), shape: puzzleShape };
+  }
+  const square = squareFrameFromCorners(corners);
+  return square && { ...square, shape: puzzleShape };
+}
+
+function puzzleShapePoints(shape) {
+  const shapes = {
+    diamond: [[.5, 0], [1, .5], [.5, 1], [0, .5]],
+    triangle: [[.5, 0], [1, 1], [0, 1]],
+    'triangle-down': [[0, 0], [1, 0], [.5, 1]],
+    pentagon: [[.5, 0], [.98, .36], [.79, .95], [.21, .95], [.02, .36]],
+    hexagon: [[.25, 0], [.75, 0], [1, .5], [.75, 1], [.25, 1], [0, .5]],
+    octagon: [[.3, 0], [.7, 0], [1, .3], [1, .7], [.7, 1], [.3, 1], [0, .7], [0, .3]],
+    parallelogram: [[.25, 0], [1, 0], [.75, 1], [0, 1]],
+    trapezoid: [[.2, 0], [.8, 0], [1, 1], [0, 1]],
+    arrow: [[0, .35], [.6, .35], [.6, 0], [1, .5], [.6, 1], [.6, .65], [0, .65]],
+    cross: [[.35, 0], [.65, 0], [.65, .35], [1, .35], [1, .65], [.65, .65], [.65, 1], [.35, 1], [.35, .65], [0, .65], [0, .35], [.35, .35]],
+    shield: [[0, 0], [1, 0], [.9, .65], [.5, 1], [.1, .65]],
+    tag: [[0, 0], [.72, 0], [1, .28], [1, 1], [0, 1]]
+  };
+  if (shape === 'star' || shape === 'burst') {
+    const spikes = shape === 'star' ? 5 : 12;
+    return Array.from({ length: spikes * 2 }, (_, i) => {
+      const angle = -Math.PI / 2 + i * Math.PI / spikes;
+      const radius = i % 2 ? shape === 'star' ? .22 : .39 : .5;
+      return [.5 + Math.cos(angle) * radius, .5 + Math.sin(angle) * radius];
+    });
+  }
+  return shapes[shape] || [[0, 0], [1, 0], [1, 1], [0, 1]];
+}
+
+function tracePuzzleShape(target, frame) {
+  const { x, y, w, h, shape } = frame;
+  target.beginPath();
+  if (shape === 'freestyle' || shape === 'rectangle' || shape === 'portrait') {
+    frame.q.forEach((p, i) => i ? target.lineTo(p.x, p.y) : target.moveTo(p.x, p.y));
+  } else if (shape === 'circle') {
+    target.ellipse(x + w / 2, y + h / 2, Math.min(w, h) / 2, Math.min(w, h) / 2, 0, 0, Math.PI * 2);
+  } else if (shape === 'oval') {
+    target.ellipse(x + w / 2, y + h / 2, w / 2, h * .34, 0, 0, Math.PI * 2);
+  } else if (shape === 'heart') {
+    target.moveTo(x + w * .5, y + h * .92);
+    target.bezierCurveTo(x + w * .38, y + h * .78, x + w * .04, y + h * .55, x + w * .04, y + h * .32);
+    target.bezierCurveTo(x + w * .04, y + h * .08, x + w * .36, y + h * .05, x + w * .5, y + h * .28);
+    target.bezierCurveTo(x + w * .64, y + h * .05, x + w * .96, y + h * .08, x + w * .96, y + h * .32);
+    target.bezierCurveTo(x + w * .96, y + h * .55, x + w * .62, y + h * .78, x + w * .5, y + h * .92);
+  } else if (shape === 'rounded-square') {
+    const r = Math.min(w, h) * .18;
+    target.moveTo(x + r, y); target.lineTo(x + w - r, y); target.quadraticCurveTo(x + w, y, x + w, y + r);
+    target.lineTo(x + w, y + h - r); target.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    target.lineTo(x + r, y + h); target.quadraticCurveTo(x, y + h, x, y + h - r);
+    target.lineTo(x, y + r); target.quadraticCurveTo(x, y, x + r, y);
+  } else {
+    puzzleShapePoints(shape).forEach(([px, py], i) => {
+      const point = { x: x + px * w, y: y + py * h };
+      if (i) target.lineTo(point.x, point.y); else target.moveTo(point.x, point.y);
+    });
+  }
+  target.closePath();
+}
+
+function portal() {
+  updatePortalFilterGesture(handRes, performance.now());
+  if (handRes.length < 2) {
+    state = 'need 2 hands'; return;
+  }
+  let q;
+  if (portalPoints === 4) {
+    q = fourFingerCorners();
+  } else {
+    const hs = handRes.slice(0, 2).sort((a, b) => P(a[0]).x - P(b[0]).x);
+    const ids = portalPoints === 6 ? [4, 8, 12] : [4, 8, 12, 16];
+    q = hs.flatMap(h => ids.map(i => P(h[i])));
+    const center = q.reduce((a, p) => ({ x: a.x + p.x / q.length, y: a.y + p.y / q.length }), { x: 0, y: 0 });
+    q.sort((a, b) => Math.atan2(a.y - center.y, a.x - center.x) - Math.atan2(b.y - center.y, b.x - center.x));
+  }
+  const bounds = q && polygonBounds(q);
+  if (!bounds) return;
+  const { x: bx, y: by, w: bw, h: bh } = bounds;
+  sctx.drawImage(view, 0, 0);
+  ctx.save();
+  ctx.beginPath(); q.forEach((p, i) => i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y)); ctx.closePath();
+  ctx.clip(); applyFilter(bx, by, bw, bh); ctx.restore();
+  ctx.beginPath(); q.forEach((p, i) => i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y)); ctx.closePath();
+  ctx.strokeStyle = 'rgba(255,255,255,.8)'; ctx.lineWidth = 1.5; ctx.stroke();
+  state = filt;
+}
+
+function resetPuzzleCaptureTimer() {
+  puzzleBoxSince = 0;
+  puzzleBoxPrevious = null;
+  puzzleNextCaptureAt = 0;
+}
+
+function puzzleBoxIsStable(q, now) {
+  const stable = puzzleBoxPrevious &&
+    q.every((p, i) => d(p, puzzleBoxPrevious[i]) <= PUZZLE_BOX_JITTER_PX);
+  if (!stable) {
+    puzzleBoxSince = now;
+    puzzleBoxPrevious = q.map(p => ({ x: p.x, y: p.y }));
+    return false;
+  }
+  puzzleBoxPrevious = q.map(p => ({ x: p.x, y: p.y }));
+  return now - puzzleBoxSince >= PUZZLE_BOX_STABLE_MS;
+}
+
+function capturePuzzlePhoto(frame) {
+  const photo = document.createElement('canvas');
+  photo.width = Math.max(1, Math.round(frame.w));
+  photo.height = Math.max(1, Math.round(frame.h));
+  photo.getContext('2d').drawImage(view, frame.x, frame.y, frame.w, frame.h, 0, 0, photo.width, photo.height);
+  puzzlePhotos.push(photo);
+  $('savePuzzle').disabled = puzzlePhotos.length < PUZZLE_GRID_SIZE * PUZZLE_GRID_SIZE;
+}
+
+function drawPuzzleGrid(frame, countdown) {
+  const { q, x, y, w, h } = frame;
+  ctx.save();
+  tracePuzzleShape(ctx, frame);
+  ctx.clip();
+  for (let i = 0; i < PUZZLE_GRID_SIZE * PUZZLE_GRID_SIZE; i++) {
+    const col = i % PUZZLE_GRID_SIZE, row = Math.floor(i / PUZZLE_GRID_SIZE);
+    const left = x + w * col / PUZZLE_GRID_SIZE, top = y + h * row / PUZZLE_GRID_SIZE;
+    const right = x + w * (col + 1) / PUZZLE_GRID_SIZE, bottom = y + h * (row + 1) / PUZZLE_GRID_SIZE;
+    if (puzzlePhotos[i]) ctx.drawImage(puzzlePhotos[i], left, top, right - left, bottom - top);
+    else { ctx.fillStyle = 'rgba(0,0,0,.24)'; ctx.fillRect(left, top, right - left, bottom - top); }
+  }
+  ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.lineWidth = 2;
+  for (let i = 1; i < PUZZLE_GRID_SIZE; i++) {
+    const gx = x + w * i / PUZZLE_GRID_SIZE, gy = y + h * i / PUZZLE_GRID_SIZE;
+    ctx.beginPath(); ctx.moveTo(gx, y); ctx.lineTo(gx, y + h); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x, gy); ctx.lineTo(x + w, gy); ctx.stroke();
+  }
+  ctx.restore();
+  tracePuzzleShape(ctx, frame);
+  ctx.strokeStyle = '#facc15'; ctx.lineWidth = 3; ctx.stroke();
+  ctx.fillStyle = 'rgba(0,0,0,.72)'; ctx.fillRect(x + 4, y + 4, Math.min(w - 8, 170), 22);
+  ctx.fillStyle = '#facc15'; ctx.font = '600 12px system-ui';
+  ctx.fillText(`${frame.shape} ${puzzlePhotos.length}/9`, x + 10, y + 19);
+  if (countdown) {
+    ctx.save(); ctx.textAlign = 'center'; ctx.font = '700 72px system-ui';
+    ctx.fillStyle = 'rgba(0,0,0,.68)'; ctx.fillText(String(countdown), x + w / 2 + 2, y + h / 2 + 26);
+    ctx.fillStyle = '#fff'; ctx.fillText(String(countdown), x + w / 2, y + h / 2 + 24);
+    ctx.restore();
+  }
+}
+
+function drawPuzzleFrame() {
+  const now = performance.now();
+  let frame = puzzleLockedFrame;
+  if (!frame) {
+    const corners = fourFingerCorners();
+    if (!corners) {
+      resetPuzzleCaptureTimer();
+      if (puzzleLastFrame) drawPuzzleGrid(puzzleLastFrame, null);
+      $('status').textContent = 'Show both hands and make a square with four fingertips.';
+      state = `puzzle ${puzzlePhotos.length}/9`;
+      return;
+    }
+    frame = puzzleFrameFromCorners(corners);
+    if (!frame) {
+      resetPuzzleCaptureTimer();
+      if (puzzleLastFrame) drawPuzzleGrid(puzzleLastFrame, null);
+      $('status').textContent = 'Move your hands farther apart to make a bigger frame.';
+      state = 'frame too small';
+      return;
+    }
+    puzzleLastFrame = frame;
+    if (!puzzleBoxIsStable(frame.q, now)) {
+      drawPuzzleGrid(frame, null);
+      $('status').textContent = `Adjust the ${puzzleShape} size, then hold your four fingertips steady to lock it.`;
+      state = `sizing ${puzzleShape}`;
+      return;
+    }
+    puzzleLockedFrame = {
+      ...frame,
+      q: frame.q.map(p => ({ x: p.x, y: p.y }))
+    };
+    puzzleLastFrame = puzzleLockedFrame;
+    puzzleNextCaptureAt = now + PUZZLE_PHOTO_INTERVAL_MS;
+    frame = puzzleLockedFrame;
+  }
+  if (puzzlePhotos.length < PUZZLE_GRID_SIZE * PUZZLE_GRID_SIZE) {
+    if (!puzzleNextCaptureAt) puzzleNextCaptureAt = now + PUZZLE_PHOTO_INTERVAL_MS;
+    if (now >= puzzleNextCaptureAt) {
+      capturePuzzlePhoto(frame);
+      puzzleNextCaptureAt = puzzlePhotos.length < PUZZLE_GRID_SIZE * PUZZLE_GRID_SIZE
+        ? now + PUZZLE_PHOTO_INTERVAL_MS : 0;
+    }
+  }
+  const countdown = puzzleNextCaptureAt
+    ? Math.max(1, Math.ceil((puzzleNextCaptureAt - now) / 1000)) : null;
+  drawPuzzleGrid(frame, countdown);
+  $('status').textContent = puzzlePhotos.length === 9
+    ? 'Grid complete. Save your 3 x 3 collage or reset.'
+    : `${frame.shape} locked. Photo ${puzzlePhotos.length + 1}/9 in ${countdown}. Move inside the fixed frame.`;
+  state = `puzzle ${puzzlePhotos.length}/9`;
+}
+
+function resetPuzzleGrid() {
+  puzzlePhotos = [];
+  puzzleLastFrame = null;
+  puzzleLockedFrame = null;
+  resetPuzzleCaptureTimer();
+  $('savePuzzle').disabled = true;
+  $('status').textContent = `Grid reset. Adjust the ${puzzleShape} frame with four fingertips.`;
+}
+
+function setPuzzleShape(shape) {
+  const changed = puzzleShape !== shape;
+  puzzleShape = shape;
+  $('puzzleShapePicker').value = shape;
+  if (changed) {
+    puzzlePhotos = [];
+    puzzleLastFrame = null;
+    puzzleLockedFrame = null;
+    resetPuzzleCaptureTimer();
+    $('savePuzzle').disabled = true;
+    $('status').textContent = `Shape changed to ${shape}. Adjust the frame and hold steady to lock it.`;
+  }
+}
+
+function savePuzzleCollage() {
+  if (puzzlePhotos.length !== PUZZLE_GRID_SIZE * PUZZLE_GRID_SIZE) {
+    $('status').textContent = 'Fill all 9 cells before saving the collage.';
+    return;
+  }
+  const cellW = puzzlePhotos[0].width, cellH = puzzlePhotos[0].height;
+  const collage = document.createElement('canvas');
+  collage.width = cellW * PUZZLE_GRID_SIZE; collage.height = cellH * PUZZLE_GRID_SIZE;
+  const collageCtx = collage.getContext('2d');
+  const frame = puzzleLockedFrame || puzzleLastFrame;
+  const outputFrame = {
+    x: 0, y: 0, w: collage.width, h: collage.height, shape: frame.shape,
+    q: frame.q.map(p => ({
+      x: (p.x - frame.x) / frame.w * collage.width,
+      y: (p.y - frame.y) / frame.h * collage.height
+    }))
+  };
+  collageCtx.save(); tracePuzzleShape(collageCtx, outputFrame); collageCtx.clip();
+  puzzlePhotos.forEach((photo, i) => {
+    const x = i % PUZZLE_GRID_SIZE * cellW, y = Math.floor(i / PUZZLE_GRID_SIZE) * cellH;
+    collageCtx.drawImage(photo, x, y, cellW, cellH);
+  });
+  collageCtx.strokeStyle = '#fff'; collageCtx.lineWidth = 3;
+  for (let i = 1; i < PUZZLE_GRID_SIZE; i++) {
+    const x = i * cellW, y = i * cellH;
+    collageCtx.beginPath(); collageCtx.moveTo(x, 0); collageCtx.lineTo(x, collage.height); collageCtx.stroke();
+    collageCtx.beginPath(); collageCtx.moveTo(0, y); collageCtx.lineTo(collage.width, y); collageCtx.stroke();
+  }
+  collageCtx.restore(); tracePuzzleShape(collageCtx, outputFrame); collageCtx.stroke();
+  const a = document.createElement('a');
+  a.download = 'puzzle-cam-3x3.png'; a.href = collage.toDataURL('image/png'); a.click();
+}
+
+/* ---------- face ---------- */
+function segs(lms, conns, color, lw, target = ctx) {
+  target.beginPath();
+  for (const [a, b] of conns) {
+    const A = P(lms[a]), B = P(lms[b]);
+    target.moveTo(A.x, A.y); target.lineTo(B.x, B.y);
+  }
+  target.strokeStyle = color; target.lineWidth = lw; target.stroke();
+}
+
+function faceMetrics(f) {
+  const dd = (a, b) => Math.hypot(f[a].x - f[b].x, f[a].y - f[b].y);
+  const mouth = dd(13, 14) / dd(10, 152), smile = dd(61, 291) / dd(234, 454);
+  const eye = (dd(159, 145) / dd(33, 133) + dd(386, 374) / dd(362, 263)) / 2;
+  const tilt = Math.atan2(f[263].y - f[33].y, f[263].x - f[33].x) * 180 / Math.PI;
+  return { mouth, smile, eye, tilt };
+}
+
+function faceTags(f) {
+  const { mouth, smile, eye, tilt } = faceMetrics(f);
+  const t = [];
+  if (mouth > 0.07) t.push('mouth open');
+  else if (smile > 0.46) t.push('smiling');
+  if (eye < 0.17) t.push('eyes closed');
+  if (Math.abs(tilt) > 12) t.push('head tilted');
+  return t;
+}
+
+function updateSignals() {
+  const now = performance.now();
+  if (now - lastSignalsAt < SIGNAL_UPDATE_INTERVAL_MS) return;
+  lastSignalsAt = now;
+  const expression = $('expressionCue'), body = $('bodyCue');
+  if (!faceOn) expression.textContent = 'Face detection is off';
+  else if (!faceRes) expression.textContent = 'No face detected';
+  else {
+    const { mouth, smile, eye } = faceMetrics(faceRes);
+    const cues = [];
+    if (smile > 0.46) cues.push('happy-like (smiling) cues');
+    if (mouth > 0.07 && eye > 0.3) cues.push('surprise-like (open mouth, wide eyes) cues');
+    else if (mouth > 0.07) cues.push('mouth open');
+    if (eye < 0.17) cues.push('eyes closed');
+    expression.textContent = cues.length ? cues.join(', ') : 'No strong expression cue';
+  }
+
+  if (!handRes.length && !faceRes) body.textContent = 'No face or hands detected';
+  else {
+    const cues = handRes.map(h => {
+      const { hs, i, m, r, p } = fingers(h);
+      const pinch = d(h[4], h[8]) / hs;
+      if (i && m && r && p) return 'open palm';
+      if (pinch < 0.35) return 'thumb-index pinch';
+      if (i && !m && !r && !p) return 'pointing';
+      if (!i && !m && !r && !p) return 'closed hand';
+      return 'mixed hand pose';
+    });
+    if (faceRes) {
+      const { tilt } = faceMetrics(faceRes);
+      cues.push(Math.abs(tilt) > 12 ? 'head tilted' : 'head mostly upright');
+    }
+    body.textContent = cues.length ? cues.join('; ') : 'No hands detected';
+  }
+}
+
+function drawFace() {
+  const f = faceRes;
+  segs(f, FACEMESH_TESSELATION, 'rgba(255,255,255,.16)', 0.6, faceCtx);
+  segs(f, FACEMESH_FACE_OVAL, '#34d399', 1.8, faceCtx);
+  segs(f, FACEMESH_LIPS, '#fb7185', 1.6, faceCtx);
+  segs(f, FACEMESH_LEFT_EYE, '#60a5fa', 1.6, faceCtx); segs(f, FACEMESH_RIGHT_EYE, '#60a5fa', 1.6, faceCtx);
+  segs(f, FACEMESH_LEFT_EYEBROW, '#fbbf24', 1.6, faceCtx); segs(f, FACEMESH_RIGHT_EYEBROW, '#fbbf24', 1.6, faceCtx);
+  const pts = f.map(P), xs = pts.map(p => p.x), ys = pts.map(p => p.y);
+  const x = Math.min(...xs), y = Math.min(...ys), w = Math.max(...xs) - x, h = Math.max(...ys) - y;
+  faceCtx.strokeStyle = '#34d399'; faceCtx.lineWidth = 2; faceCtx.strokeRect(x - 6, y - 6, w + 12, h + 12);
+  const tags = faceTags(f), label = 'Face' + (tags.length ? ': ' + tags.join(', ') : '');
+  faceCtx.font = '600 14px system-ui'; const tw = faceCtx.measureText(label).width + 12;
+  faceCtx.fillStyle = '#34d399'; faceCtx.fillRect(x - 6, y - 28, tw, 22);
+  faceCtx.fillStyle = '#04120c'; faceCtx.fillText(label, x, y - 12);
+}
+
+/* ---------- render ---------- */
+function hud() {
+  if (mode === 'puzzle') return;
+  ctx.fillStyle = 'rgba(0,0,0,.6)'; ctx.fillRect(8, 8, 300, mode === 'draw' ? 46 : 28);
+  ctx.fillStyle = '#e6edf3'; ctx.font = '13px ui-monospace,Menlo,Consolas,monospace';
+  ctx.fillText(`mode: ${state}   fps: ${fps.toFixed(1)}`, 16, 27);
+  if (mode === 'draw') ctx.fillText(`ink=${COLOR_NAMES[COLORS.indexOf(ink)] || ink} brush=${brush}px erase=${eraser}px`, 16, 45);
+  if (mode === 'draw') {
+    const sw = W / COLORS.length;
+    COLORS.forEach((c, i) => {
+      ctx.fillStyle = c; ctx.fillRect(i * sw, H - 22, sw, 22);
+      if (c === ink) { ctx.strokeStyle = '#000'; ctx.lineWidth = 3; ctx.strokeRect(i * sw + 2, H - 20, sw - 4, 18); }
+    });
+  }
+}
+
+function render() {
+  ctx.save();
+  if (mirror) { ctx.translate(W, 0); ctx.scale(-1, 1); }
+  ctx.drawImage(video, 0, 0, W, H); ctx.restore();
+  state = mode === 'type' ? 'typing' : state;
+  if (mode === 'portal') portal();
+  if (mode === 'draw') drawMode();
+  if (mode === 'puzzle') drawPuzzleFrame();
+  else ctx.drawImage(paint, 0, 0);
+  if (mode === 'draw' && boxPreview) {
+    ctx.save(); ctx.strokeStyle = ink; ctx.lineWidth = brush; ctx.setLineDash([6, 4]);
+    ctx.strokeRect(boxPreview.x, boxPreview.y, boxPreview.w, boxPreview.h); ctx.restore();
+  }
+  if (mode !== 'puzzle' && faceOn && faceRes) ctx.drawImage(faceLayer, 0, 0);
+  if (mode !== 'puzzle') for (const h of handRes) {
+    segs(h, HAND_CONNECTIONS, '#818cf8', 3);
+    ctx.fillStyle = '#fff'; h.forEach(l => { const p = P(l); ctx.fillRect(p.x - 2, p.y - 2, 4, 4); });
+  }
+  if (mode === 'type') typeMode();
+  hud();
+  updateSignals();
+  $('gesture').textContent = mode === 'type' && ilySequenceActive
+    ? 'I love you sequence · ' + ILY_STEPS[ilyStep]
+    : handRes.length ? 'Gesture: ' + handRes.map(describeGesture).join(' + ') : 'Gesture: waiting for hand';
+  if (cameraError) $('status').textContent = cameraError;
+  else if (mode !== 'puzzle') $('status').textContent = handRes.length ? handRes.length + (handRes.length > 1 ? ' hands' : ' hand') + (faceRes ? ' + face' : '') : 'Show your hand to the camera';
+}
+
+/* ---------- models + camera ---------- */
+let hands = null, faceMesh = null, trackersReady = false;
+function showTrackingNotice(message) {
+  $('trackingNotice').textContent = message;
+  $('trackingNotice').hidden = false;
+}
+
+try {
+  if (typeof Hands === 'undefined') throw new Error('Hand tracking library did not load.');
+  hands = new Hands({ locateFile: f => 'https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1675469240/' + f });
+  hands.setOptions({ maxNumHands: 2, modelComplexity: 1, minDetectionConfidence: 0.7, minTrackingConfidence: 0.6 });
+  hands.onResults(r => { handRes = r.multiHandLandmarks || []; });
+  trackersReady = true;
+} catch (error) {
+  cameraError = 'Hand tracking unavailable: ' + (error && error.message ? error.message : String(error));
+  $('cameraToggle').disabled = true;
+  $('cameraToggle').textContent = 'Tracking unavailable';
+  $('faceOn').checked = false;
+  $('faceOn').disabled = true;
+  showTrackingNotice(cameraError + ' Check your connection and reload the page.');
+}
+
+if (trackersReady) {
+  try {
+    if (typeof FaceMesh === 'undefined') throw new Error('Face tracking library did not load.');
+    faceMesh = new FaceMesh({ locateFile: f => 'https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4.1633559619/' + f });
+    faceMesh.setOptions({ maxNumFaces: 1, refineLandmarks: false, minDetectionConfidence: 0.5, minTrackingConfidence: 0.5 });
+    faceMesh.onResults(r => {
+      faceRes = faceOn ? (r.multiFaceLandmarks && r.multiFaceLandmarks[0]) || null : null;
+      faceCtx.clearRect(0, 0, W, H);
+      if (faceOn && faceRes && sized) drawFace();
+    });
+  } catch (error) {
+    faceOn = false;
+    $('faceOn').checked = false;
+    $('faceOn').disabled = true;
+    showTrackingNotice('Hand tracking is ready, but face tracking is unavailable: ' + (error && error.message ? error.message : String(error)));
+  }
+} else {
+  $('cameraToggle').disabled = true;
+  $('faceOn').checked = false;
+  $('faceOn').disabled = true;
+}
+
+async function processCameraFrame() {
+  if (!cameraRunning || processingFrame) return;
+  if (video.readyState < 2 || !video.videoWidth) {
+    frameRequest = requestAnimationFrame(processCameraFrame);
+    return;
+  }
+  const videoTime = video.currentTime;
+  if (videoTime === lastVideoTime) {
+    frameRequest = requestAnimationFrame(processCameraFrame);
+    return;
+  }
+  lastVideoTime = videoTime;
+  processingFrame = true;
+  try {
+    if (!sized || W !== video.videoWidth || H !== video.videoHeight) setSize();
+    await hands.send({ image: video });
+    const now = performance.now();
+    if (faceOn && faceMesh && !faceBusy && now - lastFaceAt >= FACE_INFERENCE_INTERVAL_MS) {
+      lastFaceAt = now;
+      const faceTask = faceMesh.send({ image: video });
+      faceBusy = true;
+      faceTask.catch(error => {
+        faceOn = false;
+        faceRes = null;
+        faceCtx.clearRect(0, 0, W, H);
+        $('faceOn').checked = false;
+        $('faceOn').disabled = true;
+        showTrackingNotice('Face tracking stopped: ' + (error && error.message ? error.message : String(error)) + '. Hand tracking continues.');
+      }).finally(() => { faceBusy = false; });
+    } else if (!faceOn) {
+      faceRes = null;
+      faceCtx.clearRect(0, 0, W, H);
+    }
+    cameraError = '';
+    render();
+    consecutiveFrameErrors = 0;
+    frames.push(now);
+    while (frames.length && now - frames[0] > 1000) frames.shift();
+    fps = frames.length;
+  } catch (error) {
+    cameraError = 'Tracking error: ' + (error && error.message ? error.message : String(error));
+    consecutiveFrameErrors++;
+    if (consecutiveFrameErrors >= 3) {
+      stopCameraStream();
+      cameraError = 'Tracking stopped after repeated errors: ' + (error && error.message ? error.message : String(error));
+      $('cameraToggle').textContent = 'Retry camera';
+    }
+    $('status').textContent = cameraError;
+  } finally {
+    processingFrame = false;
+    if (cameraRunning) frameRequest = requestAnimationFrame(processCameraFrame);
+  }
+}
+
+async function startCamera() {
+  if (cameraStarting || cameraRunning) return;
+  if (!trackersReady) {
+    $('status').textContent = cameraError || 'Hand tracking is unavailable. Reload the page to try again.';
+    return;
+  }
+  cameraStarting = true;
+  let timeoutId;
+  cameraError = '';
+  $('cameraToggle').disabled = true;
+  $('cameraToggle').textContent = 'Starting camera…';
+  $('status').textContent = 'Starting camera…';
+  try {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      throw new Error('Camera access is unavailable in this browser context. Try HTTPS or localhost.');
+    }
+    let requestTimedOut = false;
+    const cameraRequest = navigator.mediaDevices.getUserMedia({
+      audio: false,
+      video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: 'user' }
+    }).then(stream => {
+      if (requestTimedOut) {
+        stream.getTracks().forEach(track => track.stop());
+        return null;
+      }
+      return stream;
+    });
+    const permissionTimeout = new Promise((resolve, reject) => {
+      timeoutId = setTimeout(() => {
+        requestTimedOut = true;
+        reject(new Error('No response to the camera permission request. Press Retry camera to try again.'));
+      }, 15000);
+    });
+    mediaStream = await Promise.race([cameraRequest, permissionTimeout]);
+    clearTimeout(timeoutId);
+    if (!mediaStream) throw new Error('The camera request completed without a video stream.');
+    mediaStream.getVideoTracks().forEach(track => track.addEventListener('ended', handleCameraEnded, { once: true }));
+    video.srcObject = mediaStream;
+    await video.play();
+    cameraRunning = true;
+    consecutiveFrameErrors = 0;
+    lastVideoTime = -1;
+    $('cameraToggle').textContent = 'Pause camera';
+    frameRequest = requestAnimationFrame(processCameraFrame);
+  } catch (error) {
+    cameraRunning = false;
+    const message = error && error.message ? error.message : String(error);
+    cameraError = 'Camera unavailable: ' + message +
+      (message.indexOf('No response') === 0 ? '' : '. Allow camera access, then retry.');
+    if (timeoutId) clearTimeout(timeoutId);
+    stopCameraStream();
+    $('cameraToggle').textContent = 'Retry camera';
+    $('status').textContent = cameraError;
+  } finally {
+    cameraStarting = false;
+    $('cameraToggle').disabled = false;
+  }
+}
+function toggleCamera() {
+  if (cameraRunning) {
+    stopCameraStream();
+    cameraError = '';
+    $('cameraToggle').textContent = 'Resume camera';
+    $('status').textContent = 'Camera paused. Resume to continue tracking.';
+  } else startCamera();
+}
+function stopCameraStream() {
+  cameraRunning = false;
+  if (frameRequest) cancelAnimationFrame(frameRequest);
+  frameRequest = 0;
+  if (mediaStream) mediaStream.getTracks().forEach(track => track.stop());
+  mediaStream = null;
+  video.pause();
+  video.srcObject = null;
+}
+function handleCameraEnded() {
+  if (!cameraRunning) return;
+  stopCameraStream();
+  cameraError = 'Camera disconnected. Reconnect it and retry.';
+  $('cameraToggle').textContent = 'Retry camera';
+  $('status').textContent = cameraError;
+}
+$('cameraToggle').onclick = toggleCamera;
+if (trackersReady) $('status').textContent = 'Press Start camera to enable hand tracking.';
+else $('status').textContent = cameraError;
+
+/* ---------- UI ---------- */
+function setInk(c) {
+  ink = c;
+  document.querySelectorAll('.sw').forEach(s => s.classList.toggle('on', s.dataset.c === c));
+}
+function setDrawTool(tool) {
+  if (boxStart) finishBox();
+  drawTool = tool; last = null; lastMiddle = null; lastPointingAt = 0; eraseSince = 0; fistSince = 0;
+  $('freehandTool').classList.toggle('on', tool === 'freehand');
+  $('boxTool').classList.toggle('on', tool === 'box');
+  $('twoFingerTool').classList.toggle('on', tool === 'two-finger');
+}
+function setILYSequence(active) {
+  ilySequenceActive = active; ilyStep = 0; ilyCandidate = null; ilySince = 0;
+  cand = null; locked = false; since = performance.now();
+  $('ilySequence').classList.toggle('on', active);
+  $('ilySequence').textContent = active ? 'Cancel sequence' : 'Start I love you sequence';
+  $('ilyGuide').textContent = active
+    ? 'Step 1: ' + ILY_STEPS[0] + '. Hold each pose for about 0.6 seconds.'
+    : 'Start the sequence to follow the three poses on the gesture label.';
+  $('letter').textContent = active ? '1/3' : '–';
+  $('prog').style.width = '0%';
+}
+$('freehandTool').onclick = () => setDrawTool('freehand');
+$('boxTool').onclick = () => setDrawTool('box');
+$('twoFingerTool').onclick = () => setDrawTool('two-finger');
+$('ilySequence').onclick = () => setILYSequence(!ilySequenceActive);
+$('resetPuzzle').onclick = resetPuzzleGrid;
+$('savePuzzle').onclick = savePuzzleCollage;
+PUZZLE_SHAPES.forEach(shape => {
+  const option = document.createElement('option');
+  option.value = shape;
+  option.textContent = shape.split('-').map(part => part[0].toUpperCase() + part.slice(1)).join(' ');
+  $('puzzleShapePicker').appendChild(option);
+});
+$('puzzleShapePicker').onchange = e => setPuzzleShape(e.target.value);
+setPuzzleShape(puzzleShape);
+COLORS.forEach(c => {
+  const b = document.createElement('button');
+  b.className = 'sw'; b.style.background = c; b.dataset.c = c;
+  b.onclick = () => setInk(c); $('swatches').appendChild(b);
+});
+setInk(ink);
+
+function setFilter(f) {
+  filt = f;
+  document.querySelectorAll('#filters .chip').forEach(c => c.classList.toggle('on', c.dataset.f === f));
+  $('portalFilterStatus').textContent = `Current filter: ${f}. Pinch and release thumb/index or save a Portal snapshot to advance.`;
+}
+function setPortalPoints(count) {
+  portalPoints = count;
+  document.querySelectorAll('#portalCorners .chip').forEach(c => c.classList.toggle('on', +c.dataset.corners === count));
+}
+document.querySelectorAll('#portalCorners .chip').forEach(c => c.onclick = () => setPortalPoints(+c.dataset.corners));
+setPortalPoints(portalPoints);
+FILTER_LIST.forEach(f => {
+  const b = document.createElement('button');
+  b.className = 'chip'; b.dataset.f = f; b.textContent = f; b.onclick = () => setFilter(f);
+  $('filters').appendChild(b);
+});
+setFilter(filt);
+$('filterSearch').oninput = e => {
+  const query = e.target.value.trim().toLowerCase();
+  document.querySelectorAll('#filters .chip').forEach(button => {
+    button.hidden = !button.dataset.f.includes(query);
+  });
+};
+
+function setMirror(enabled) {
+  mirror = enabled;
+  $('mirrorToggle').textContent = 'Mirror: ' + (mirror ? 'On' : 'Off');
+  $('mirrorToggle').setAttribute('aria-pressed', String(mirror));
+  faceCtx.clearRect(0, 0, W, H);
+  if (faceOn && faceRes && sized) drawFace();
+}
+$('mirrorToggle').onclick = () => setMirror(!mirror);
+
+function setTheme(theme) {
+  themeMode = theme;
+  if (theme === 'auto') document.documentElement.removeAttribute('data-theme');
+  else document.documentElement.setAttribute('data-theme', theme);
+  $('themeToggle').textContent = 'Theme: ' + theme[0].toUpperCase() + theme.slice(1);
+}
+$('themeToggle').onclick = () => setTheme(themeMode === 'auto' ? 'dark' : themeMode === 'dark' ? 'light' : 'auto');
+setTheme(themeMode);
+
+document.addEventListener('keydown', e => {
+  if (e.ctrlKey || e.altKey || e.metaKey || /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) return;
+  const key = e.key.toLowerCase();
+  if (key === 'm') setMirror(!mirror);
+  else if (key === 't') setTheme(themeMode === 'auto' ? 'dark' : themeMode === 'dark' ? 'light' : 'auto');
+  else if (key === 'p') toggleCamera();
+  else {
+    const i = +e.key - 1;
+    if (FILTER_LIST[i]) setFilter(FILTER_LIST[i]);
+  }
+});
+
+document.querySelectorAll('.tab').forEach(t => t.onclick = () => {
+  if (t.dataset.mode !== 'type' && ilySequenceActive) setILYSequence(false);
+  if (mode === 'draw' && t.dataset.mode !== 'draw') finishBox();
+  if (mode === 'puzzle' && t.dataset.mode !== 'puzzle') resetPuzzleCaptureTimer();
+  mode = t.dataset.mode; last = null; lastMiddle = null; lastPointingAt = 0; eraseSince = 0; fistSince = 0;
+  document.querySelectorAll('.tab').forEach(x => x.classList.toggle('on', x === t));
+  document.querySelectorAll('.panel').forEach(p => p.classList.toggle('on', p.dataset.p === mode));
+  $('debug').textContent = '';
+});
+$('faceOn').onchange = e => {
+  faceOn = e.target.checked;
+  if (!faceOn) { faceRes = null; faceCtx.clearRect(0, 0, W, H); }
+  lastSignalsAt = 0;
+};
+$('brush').oninput = e => { brush = +e.target.value; $('brushV').textContent = brush; };
+$('erase').oninput = e => { eraser = +e.target.value; $('eraseV').textContent = eraser; };
+$('clearDraw').onclick = () => pctx.clearRect(0, 0, W, H);
+$('clearText').onclick = () => { text = ''; $('out').textContent = ''; };
+$('copy').onclick = async () => {
+  try {
+    if (!navigator.clipboard || !navigator.clipboard.writeText) throw new Error('Clipboard access is unavailable in this browser context.');
+    await navigator.clipboard.writeText(text);
+    $('debug').textContent = 'Copied text to clipboard.';
+  } catch (error) {
+    $('debug').textContent = 'Could not copy text: ' + (error && error.message ? error.message : String(error));
+  }
+};
+$('speak').onclick = () => {
+  try {
+    if (typeof speechSynthesis === 'undefined' || typeof SpeechSynthesisUtterance === 'undefined') {
+      throw new Error('Speech synthesis is unavailable in this browser.');
+    }
+    speechSynthesis.speak(new SpeechSynthesisUtterance(text));
+  } catch (error) {
+    $('debug').textContent = 'Could not speak text: ' + (error && error.message ? error.message : String(error));
+  }
+};
+$('save').onclick = () => {
+  const a = document.createElement('a'); a.download = 'hand-studio.png'; a.href = view.toDataURL('image/png'); a.click();
+  if (mode === 'portal') cyclePortalFilter();
+};
+</script>
+</body>
+</html>
